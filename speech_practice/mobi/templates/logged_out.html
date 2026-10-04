@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Logged Out - Speech Practice{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        background-color: #111827;
+        margin: 0;
+        padding: 0;
+    }
+
+    .center-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 80vh; /* Leaves space for navbar at top */
+    }
+
+    .logout-container {
+        background-color: #1f2937;
+        padding: 40px 30px;
+        border-radius: 16px;
+        box-shadow: 0 0 30px rgba(0, 173, 181, 0.25);
+        text-align: center;
+        width: 400px;
+        color: #f5f5f5;
+    }
+
+    .logout-container h2 {
+        color: #00adb5;
+        margin-bottom: 20px;
+    }
+
+    .logout-container p {
+        font-size: 16px;
+        margin-bottom: 25px;
+        color: #e5e5e5;
+    }
+
+    .logout-container a {
+        display: inline-block;
+        background: linear-gradient(to right, #00adb5, #007b8a);
+        color: white;
+        text-decoration: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+    .logout-container a:hover {
+        background: linear-gradient(to right, #00ced1, #009ea6);
+        transform: scale(1.03);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="center-wrapper">
+    <div class="logout-container">
+        <h2>You have been logged out</h2>
+        <p>Thank you for using the Speech Practice App.</p>
+        <a href="{% url 'login' %}">Log in again</a>
+    </div>
+</div>
+{% endblock %}

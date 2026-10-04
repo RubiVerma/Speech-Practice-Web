@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %} 
+Practice - Speech Practice 
+{% endblock %} 
+{% block extra_css %}
+
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #1e1e2f;
+  color: #f5f5f5;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 600px;
+  margin: 60px auto 20px;
+  padding: 30px;
+  background-color: #2d2d44;
+  border-radius: 15px;
+  box-shadow: 0 0 20px rgba(0, 173, 181, 0.3);
+  text-align: center;
+}
+
+.container p {
+  margin: 10px 0;
+  font-size: 1.1rem;
+}
+
+#practice-sentence {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #00adb5;
+  margin-bottom: 20px;
+}
+
+#spoken-text, #accuracy {
+  font-size: 1.2rem;
+  color: #e6e6e6;
+}
+
+button {
+  padding: 12px 20px;
+  font-size: 1rem;
+  margin: 10px;
+  border: none;
+  border-radius: 8px;
+  background-color: #00adb5;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #019ca8;
+}
+
+button:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+.circle-btn {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background-color: #393e46;
+  color: #ffffff;
+  font-size: 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 10px;
+  border: 2px solid #00adb5;
+  transition: background 0.3s ease;
+}
+
+.circle-btn:hover {
+  background-color: #00adb5;
+}
+
+.bottom-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: 30px 0 60px;
+}
+
+.bottom-buttons button {
+  padding: 10px 18px;
+  font-size: 1rem;
+}
+
+button.loading {
+  position: relative;
+  color: transparent;
+}
+
+button.loading::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border: 2px solid #fff;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0); }
+  100% { transform: rotate(360deg); }
+}
+</style>
+{% endblock %} 
+{% block content %}
+<main class="container">
+  <p><strong>Practice Sentence:</strong></p>
+  <p id="practice-sentence">{{ sentence }}</p>
+  <button class="circle-btn">🔊</button>
+  <button onclick="startRecognition()">Start Practice</button>
+  <p><strong>Your Speech:</strong></p>
+  <p id="spoken-text">---</p>
+  <p><strong>Accuracy:</strong></p>
+  <p id="accuracy">---</p>
+</main>
+
+<div class="bottom-buttons">
+  <button onclick="loadPrevious()">⟵ Previous</button>
+  <button onclick="loadNext()">Next ⟶</button>
+</div>
+<script>
+  const sentenceElement = document.getElementById("practice-sentence");
+  const spokenElement = document.getElementById("spoken-text");
+  const accuracyElement = document.getElementById("accuracy");
+
+  const startButton = document.querySelector("button[onclick='startRecognition()']");
+  
+  function speakSentence() {
+    const sentence = sentenceElement.textContent;
+    const utterance = new SpeechSynthesisUtterance(sentence);
+    utterance.lang = "en-US";
+    speechSynthesis.speak(utterance);
+  }
+
+  function startRecognition() {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    // Show loading animation
+    startButton.innerHTML = "🎙️ Listening...";
+    startButton.disabled = true;
+
+    recognition.start();
+
+    recognition.onresult = function (event) {
+      const spoken = event.results[0][0].transcript;
+      spokenElement.textContent = spoken;
+
+      fetch("/check/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: JSON.stringify({
+          reference: sentenceElement.textContent,
+          spoken: spoken,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          accuracyElement.textContent = data.accuracy + "%";
+          sentenceElement.textContent = data.new_sentence;
+        })
+        .finally(() => {
+          startButton.innerHTML = "Start Practice";
+          startButton.disabled = false;
+        });
+    };
+
+    recognition.onerror = function (event) {
+      spokenElement.textContent = "Error: " + event.error;
+      startButton.innerHTML = "Start Practice";
+      startButton.disabled = false;
+    };
+  }
+
+  function updateSentence(data) {
+    sentenceElement.textContent = data.sentence;
+    spokenElement.textContent = "---";
+    accuracyElement.textContent = "---";
+
+    document.querySelector("button[onclick='loadPrevious()']").disabled = !data.has_previous;
+    document.querySelector("button[onclick='loadNext()']").disabled = !data.has_next;
+  }
+
+  function loadPrevious() {
+    fetch("/previous/")
+      .then((res) => res.json())
+      .then((data) => updateSentence(data));
+  }
+
+  function loadNext() {
+    fetch("/next/")
+      .then((res) => res.json())
+      .then((data) => updateSentence(data));
+  }
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === name + "=") {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  // Add event listener to 🔊 button
+  document.querySelector(".circle-btn").addEventListener("click", speakSentence);
+</script>
+
+
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends 'base.html' %} 
+{% block title %}Sign Up - Speech Practice{% endblock %}
+{% block extra_css %}
+<style>
+.signup-container {
+  max-width: 400px;
+  margin: 100px auto;
+  background-color: #2d2d44;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.6);
+  text-align: center;
+}
+
+.signup-container h2 {
+  margin-bottom: 20px;
+}
+
+.signup-container input {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 8px;
+  background-color: #3b3b5c;
+  color: white;
+}
+
+.signup-container input:focus {
+  outline: none;
+  background-color: #4d4d72;
+}
+
+.signup-container button {
+  width: 100%;
+  padding: 10px;
+  background-color: #00adb5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.3s;
+}
+
+.signup-container button:hover {
+  background-color: #01959b;
+}
+
+.signup-container p {
+  margin-top: 15px;
+}
+
+.signup-container a {
+  color: #00adb5;
+  text-decoration: none;
+}
+
+.signup-container a:hover {
+  text-decoration: underline;
+}
+
+</style>
+{% endblock %}
+{% block content %}
+  <div class="signup-container">
+    <h2>Create Your Account</h2>
+    <form method="POST" action="{% url 'signup' %}">
+      {% csrf_token %}
+      <input type="text" name="username" placeholder="Username" required>
+      <input type="email" name="email" placeholder="Email" required>
+      <input type="password" name="password1" placeholder="Password" required>
+      <input type="password" name="password2" placeholder="Confirm Password" required>
+      <button type="submit">Sign Up</button>
+    </form>
+    <p>Already have an account? <a href="{% url 'login' %}">Login</a></p>
+  </div>
+
+{% endblock %}

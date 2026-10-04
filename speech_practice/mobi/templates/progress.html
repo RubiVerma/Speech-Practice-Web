@@ -1,0 +1,177 @@
+{% extends "base.html" %} 
+{% block title %} Progress - Speech Practice {% endblock %}
+{% block extra_css %}
+<style>
+  body {
+    font-family: "Segoe UI", sans-serif;
+    background-color: #1e1e2f;
+    color: #f5f5f5;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Container Styling */
+  .container,
+  .progress-container {
+    max-width: 1000px;
+    margin: 60px auto 40px;
+    padding: 30px;
+    background-color: #2d2d44;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0, 173, 181, 0.3);
+  }
+
+  /* Headings */
+  h2 {
+    text-align: center;
+    font-size: 2rem;
+    color: #00adb5;
+    margin-bottom: 30px;
+  }
+
+  /* Stats */
+  p {
+    font-size: 1.1rem;
+    margin: 10px 0;
+  }
+
+  /* Chart */
+  #accuracyChart {
+    width: 100%;
+    max-width: 800px;
+    height: 200px;
+    background-color: #1e1e2f;
+    padding: 10px;
+    border-radius: 12px;
+    margin: 20px auto ;
+    display: block;
+    position: relative;
+  }
+
+  /* Table Styling */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 30px;
+    background-color: #393e46;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  table th,
+  table td {
+    padding: 12px 15px;
+    text-align: left;
+  }
+
+  table th {
+    background-color: #00adb5;
+    color: #fff;
+    font-weight: bold;
+  }
+
+  table tr:nth-child(even) {
+    background-color: #2e3241;
+  }
+
+  table tr:hover {
+    background-color: #4a4e69;
+  }
+  #accuracyChart canvas {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+</style>
+
+{% endblock %} {% block content %}
+<main>
+<div class="progress-container">
+  <h2>Your Progress</h2>
+  <p><strong>Total Attempts:</strong> {{ total }}</p>
+  <p><strong>Average Accuracy:</strong> {{ average }}%</p>
+<div id="accuracyChart">
+  <canvas id="chartCanvas"></canvas>
+</div>
+  <table border="1" style="margin-top: 30px">
+    <tr>
+      <th>Sentence</th>
+      <th>Your Speech</th>
+      <th>Accuracy</th>
+      <th>Time</th>
+    </tr>
+    {% for record in records %}
+    <tr>
+      <td>{{ record.sentence }}</td>
+      <td>{{ record.spoken_text }}</td>
+      <td>{{ record.accuracy }}%</td>
+      <td>{{ record.timestamp }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+</main>
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('chartCanvas').getContext('2d');
+  const accuracyChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+          labels: [
+              {% for record in records %}
+                  "{{ record.timestamp|date:'M d, H:i' }}"{% if not forloop.last %},{% endif %}
+              {% endfor %}
+          ],
+          datasets: [{
+              label: 'Accuracy (%)',
+              data: [
+                  {% for record in records %}
+                      {{ record.accuracy }}{% if not forloop.last %},{% endif %}
+                  {% endfor %}
+              ],
+              backgroundColor: 'rgba(0, 128, 255, 0.2)',
+              borderColor: 'rgba(0, 128, 255, 1)',
+              borderWidth: 2,
+              pointRadius: 4,
+              fill: true,
+              tension: 0.3
+          }]
+      },
+      options: {
+          scales: {
+              y: {
+                  beginAtZero: true,
+                  min: 0,
+                  max: 100,
+                  title: {
+                      display: true,
+                      text: 'Accuracy (%)'
+                  }
+              },
+              x: {
+                  title: {
+                      display: true,
+                      text: 'Time'
+                  }
+              }
+          },
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+              legend: {
+                  position: 'top',
+                  display: true
+              },
+              title: {
+                  display: true,
+                  text: 'Accuracy Over Time',
+                  font: {
+                      size: 16
+                  }
+              }
+          }
+      }
+  });
+</script>
+{% endblock %}
